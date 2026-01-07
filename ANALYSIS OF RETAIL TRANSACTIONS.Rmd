@@ -1,0 +1,28 @@
+---
+title: "ANALYSIS OF ONLINE RETAIL TRANSACTIONS"
+output: pdf_document
+date: "2026-01-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+install.packages("readxl")
+library(readxl)
+```
+```{r}
+retail <- read_xlsx("/Users/ataka/Downloads/online_retail_II.xlsx")
+```
+
+```{r}
+head(retail)
+str(retail)
+summary(retail)
+```
+
