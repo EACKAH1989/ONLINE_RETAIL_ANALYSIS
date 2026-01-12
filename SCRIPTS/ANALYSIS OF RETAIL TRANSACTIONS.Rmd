@@ -123,6 +123,40 @@ ggplot(monthly_revenue, aes(x = year_month, y = total_revenue)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+```{r}
+top_products <- retail_clean %>%
+  group_by(description) %>%
+  summarise(
+    total_revenue = sum(revenue),
+    total_quantity = sum(quantity)
+  ) %>%
+  arrange(desc(total_revenue)) %>%
+  slice_head(n = 10)
+
+top_products
+```
+```{r}
+ggplot(top_products, aes(x = reorder(description, total_revenue), y = total_revenue)) +
+  geom_col(fill = "blue") +
+  coord_flip() +
+  labs(
+    title = "Top 10 Products by Revenue",
+    x = "Product",
+    y = "Total Revenue"
+  ) +
+  theme_minimal()
+```
+```{r}
+customer_summary <- retail_clean %>%
+  group_by(customer_id) %>%
+  summarise(
+    total_spent = sum(revenue),
+    number_of_orders = n_distinct(invoice),
+    avg_order_value = total_spent / number_of_orders
+  )
+
+summary(customer_summary)
+```
 
 
 
