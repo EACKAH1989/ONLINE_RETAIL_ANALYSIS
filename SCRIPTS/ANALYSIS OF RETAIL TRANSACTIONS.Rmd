@@ -16,8 +16,6 @@ library(tidyverse)
 install.packages("readxl")
 library(readxl)
 ```
-```{r}
-```
 
 
 ```{r}
@@ -73,9 +71,58 @@ retail %>%
 ```
 
 
+```{r}
+# Remove cancelled transactions, missing customers, and invalid values
+retail_clean <- retail %>%
+  filter(
+    !is.na(customer_id),
+    quantity > 0,
+    price > 0,
+    !grepl("^C", invoice)
+  )
+
+# Create revenue variable
+retail_clean <- retail_clean %>%
+  mutate(
+    revenue = quantity * price
+  )
+```
 
 
+```{r}
+retail_clean <- retail_clean %>%
+  mutate(
+    invoice_date = as.POSIXct(invoice_date),
+    year = lubridate::year(invoice_date),
+    month = lubridate::month(invoice_date, label = TRUE),
+    year_month = format(invoice_date, "%Y-%m")
+  )
+```
 
+```{r}
+monthly_revenue <- retail_clean %>%
+  group_by(year_month) %>%
+  summarise(
+    total_revenue = sum(revenue),
+    total_orders = n_distinct(invoice)
+  ) %>%
+  arrange(year_month)
+
+monthly_revenue
+```
+
+```{r}
+ggplot(monthly_revenue, aes(x = year_month, y = total_revenue)) +
+  geom_line(group = 1, color = "steelblue") +
+  geom_point(color = "steelblue") +
+  labs(
+    title = "Monthly Revenue Trend",
+    x = "Year-Month",
+    y = "Total Revenue"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
 
 
 
