@@ -1,5 +1,6 @@
 ---
 title: "ANALYSIS OF ONLINE RETAIL TRANSACTIONS"
+name:"EMMANUEL ATTAH ACKAH"
 output: pdf_document
 date: "2026-01-07"
 ---
@@ -157,6 +158,49 @@ customer_summary <- retail_clean %>%
 
 summary(customer_summary)
 ```
+```{r}
+customer_summary <- customer_summary %>%
+  mutate(
+    customer_segment = case_when(
+      total_spent >= quantile(total_spent, 0.9) ~ "Top 10% Spenders",
+      total_spent >= quantile(total_spent, 0.5) ~ "Mid Spenders",
+      TRUE ~ "Low Spenders"
+    )
+  )
 
+ggplot(customer_summary, aes(x = customer_segment, y = total_spent, fill = customer_segment)) +
+  geom_boxplot() +
+  labs(title = "Customer Segments by Total Revenue", x = "Segment", y = "Total Spent") +
+  theme_minimal()
+```
+```{r}
+#Determine which countries contribute the most revenue over time
+monthly_country_revenue <- retail_clean %>%
+  group_by(year_month, country) %>%
+  summarise(total_revenue = sum(revenue)) %>%
+  arrange(year_month)
+
+ggplot(monthly_country_revenue, aes(x = year_month, y = total_revenue, color = country, group = country)) +
+  geom_line() +
+  labs(title = "Monthly Revenue by Country", x = "Year-Month", y = "Revenue") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+#Determine top revenue products
+top_products_plot <- retail_clean %>%
+  group_by(description) %>%
+  summarise(total_revenue = sum(revenue), total_quantity = sum(quantity)) %>%
+  arrange(desc(total_revenue)) %>%
+  slice_head(n = 20)
+
+ggplot(top_products_plot, aes(x = reorder(description, total_quantity), y = total_quantity, fill = total_revenue)) +
+  geom_col() +
+  coord_flip() +
+  scale_fill_gradient(low = "lightblue", high = "steelblue") +
+  labs(title = "Top 20 Products by Quantity and Revenue", x = "Product", y = "Total Quantity Sold") +
+  theme_minimal()
+```
 
 
