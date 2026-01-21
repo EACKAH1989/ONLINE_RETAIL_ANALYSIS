@@ -2,7 +2,12 @@
 title: "ANALYSIS OF ONLINE RETAIL TRANSACTIONS"
 author: "Emmanuel Attah Ackah"
 date: "2026-01-07"
-output: pdf_document
+output: 
+  html_document:
+    theme: flatly
+    toc: true
+    toc_float: true
+    code_folding: show
 ---
 # Analysis of Online Retail Transactions
 
@@ -257,5 +262,55 @@ world_data <- retail_clean %>%
 hcmap("custom/world-robinson-lowres", data = world_data, value = "value",
       joinBy = c("name", "country"), name = "Total Revenue")
 ```
+
+```{r}
+#Prepare RFM Data
+# Used the max date in the dataset as the 'today' for the analysis
+analysis_date <- max(retail_clean$invoice_date) + lubridate::days(1)
+
+rfm_data <- retail_clean %>%
+  group_by(customer_id) %>%
+  summarise(
+    recency = as.numeric(difftime(analysis_date, max(invoice_date), units = "days")),
+    frequency = n_distinct(invoice),
+    monetary = sum(revenue)
+  )
+
+#Assign Scores (1-5) using Quintiles
+# 5 is the best (most recent, most frequent, highest spend)
+rfm_data <- rfm_data %>%
+  mutate(
+    r_score = ntile(desc(recency), 5), # Lower recency days = Higher score
+    f_score = ntile(frequency, 5),     # Higher frequency = Higher score
+    m_score = ntile(monetary, 5)       # Higher monetary = Higher score
+  ) %>%
+  mutate(rfm_group = paste0(r_score, f_score, m_score))
+```
+
+
+```{r}
+#Define Customer Segments
+rfm_data <- rfm_data %>%
+  mutate(customer_segment = case_when(
+    r_score >= 4 & f_score >= 4 & m_score >= 4 ~ "Champions",
+    r_score >= 3 & f_score >= 3 ~ "Loyal Customers",
+    r_score >= 4 & f_score <= 2 ~ "Recent Customers",
+    r_score <= 2 & m_score >= 4 ~ "At Risk (Big Spenders)",
+    r_score <= 1 ~ "Lost",
+    TRUE ~ "Others"
+  ))
+
+#Visualize the Segments with Color
+ggplot(rfm_data, aes(x = reorder(customer_segment, monetary, FUN = median), y = monetary, fill = customer_segment)) +
+  geom_boxplot() +
+  scale_y_log10() + # Using log scale because monetary values can vary wildly
+  scale_fill_viridis_d(option = "mako", guide = "none") +
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "RFM Customer Segments by Monetary Value",
+       subtitle = "Champions represent the highest lifetime value",
+       x = "Segment", y = "Total Spend (Log Scale)")
+```
+
 
 
