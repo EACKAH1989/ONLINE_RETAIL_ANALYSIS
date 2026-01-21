@@ -242,5 +242,20 @@ ggplot(top_products_plot, aes(x = reorder(description, total_quantity), y = tota
   labs(title = "Top 20 Products by Quantity and Revenue", x = "Product", y = "Total Quantity Sold") +
   theme_minimal()
 ```
+```{r}
+# Quick tip for a map:
+library(rnaturalearth)
+#install.packages("highcharter")
+library(highcharter)
+
+# Aggregate revenue by country
+world_data <- retail_clean %>% 
+  group_by(country) %>% 
+  summarise(value = sum(revenue))
+
+#Geographical representation of revenue by country
+hcmap("custom/world-robinson-lowres", data = world_data, value = "value",
+      joinBy = c("name", "country"), name = "Total Revenue")
+```
 
 
