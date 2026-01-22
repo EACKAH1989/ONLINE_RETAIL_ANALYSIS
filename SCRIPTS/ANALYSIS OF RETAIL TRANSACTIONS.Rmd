@@ -264,7 +264,7 @@ hcmap("custom/world-robinson-lowres", data = world_data, value = "value",
 ```
 
 ```{r}
-#Prepare RFM Data
+#Prepare RFM (Recency, Frequency, Monetary) for Data Analysis
 # Used the max date in the dataset as the 'today' for the analysis
 analysis_date <- max(retail_clean$invoice_date) + lubridate::days(1)
 
@@ -310,6 +310,38 @@ ggplot(rfm_data, aes(x = reorder(customer_segment, monetary, FUN = median), y = 
   labs(title = "RFM Customer Segments by Monetary Value",
        subtitle = "Champions represent the highest lifetime value",
        x = "Segment", y = "Total Spend (Log Scale)")
+```
+```{r}
+#install.packages("prophet")
+library(prophet)
+
+#Prepare data for Prophet
+#Aggregate daily revenue because day-to-day fluctuations matter for forecasting
+df_forecasting <- retail_clean %>%
+  group_by(date = as.Date(invoice_date)) %>%
+  summarise(y = sum(revenue)) %>%
+  rename(ds = date)
+
+#Fit the model
+#Prophet automatically detects daily, weekly, and yearly seasonality
+m <- prophet(df_forecasting)
+```
+```{r}
+#Create a future dataframe for the next 90 days
+future <- make_future_dataframe(m, periods = 90)
+
+#Predict the future values
+forecast <- predict(m, future)
+
+#Visualize the Forecast
+plot(m, forecast) +
+  theme_minimal() +
+  labs(title = "90-Day Revenue Forecast",
+       x = "Date", y = "Revenue")
+```
+```{r}
+# 6. View the components (Trend, Weekly, Yearly)
+prophet_plot_components(m, forecast)
 ```
 
 
